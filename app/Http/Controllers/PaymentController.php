@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    protected $paymentService;
+    protected $paymentService; // Injeção de dependência do serviço de pagamento
     
     public function __construct(PaymentService $paymentService)
     {
@@ -16,12 +16,13 @@ class PaymentController extends Controller
     {
 
         $request->validate([
-        'amount' => 'required|numeric|min:0.01',
-        'card_number' => 'required|string',
-        'card_holder' => 'required|string',
+            'amount' => 'required|numeric|min:0.01',
+            'card_number' => 'required|string',
+            'card_holder' => 'required|string',
         ]);
 
         $result = $this->paymentService->processTransaction($request->all());
-        return response()->json($result, 200);
+        $status_code = $result['status'] == 'aprovado' ? 201 : 401;
+        return response()->json($result, $status_code);
     }
 }
