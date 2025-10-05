@@ -4,6 +4,6 @@ use App\Models\Payment;
 
 interface PaymentRepositoryInterface
 {
-    public function create(array $data): Payment;
+    public function create(array $data): Payment; // Somente a assinatura do método 
     public function findById(int $id): ?Payment;
 }

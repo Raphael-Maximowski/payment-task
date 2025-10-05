@@ -1,37 +1,41 @@
 <?php
 namespace App\Services;
 use App\Repositories\Contracts\PaymentRepositoryInterface;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class PaymentService
 {
-    protected $paymentRepository;
-    public function __construct(PaymentRepositoryInterface $paymentRepository)
+    protected $paymentRepository; 
+    protected $fraudeService; 
+
+    public function __construct(PaymentRepositoryInterface $paymentRepository, FraudeDetectionService $fraudeService)
     {
         $this->paymentRepository = $paymentRepository;
+        $this->fraudeService = $fraudeService;
     }
 
     public function processTransaction(array $data): array
     {
-        // $apiResponse = Http::post('https://api.pagamentos.falsa/process', [
-        // 'amount' => $data['amount'],
-        // 'card' => $data['card_number'],
-        // ]);
+        $isFraudulent = $this->fraudeService->isFraudulent($data);
 
-        $status = 'aprovado';
+        $status = $isFraudulent ? 'rejeitado': 'aprovado';
 
         $paymentData = [
-        'amount' => $data['amount'],
-        'card_number' => Str::substr($data['card_number'], -4),
-        'status' => $status,
+            'amount' => $data['amount'],
+            'card_number' => Str::substr($data['card_number'], -4), 
+            'card_holder' => $data['card_holder'],
+            'status' => $status,
         ];
 
-        $payment = $this->paymentRepository->create($paymentData);
+        $payment = !$isFraudulent ? 
+            $this->paymentRepository->create($paymentData)
+            : $payment = null;
+        
+
         return [
-            'message' => 'Transação processada com sucesso.',
+            'message' => $isFraudulent ? 'Transação rejeitada por motivos de segurança' : 'Transação processada com sucesso.',
             'status' => $status,
-            'payment_id' => $payment->id
-            ];
+            'payment_id' => $payment?->id
+        ];
         }
     }
