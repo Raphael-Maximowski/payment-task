@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\FraudeServiceInterface;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\Contracts\PaymentRepositoryInterface;
 use App\Repositories\Eloquent\PaymentRepository;
+use App\Services\FraudeDetectionService;
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,7 +18,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(
             PaymentRepositoryInterface::class,
-            PaymentRepository::class
+            PaymentRepository::class,
+        );
+
+        $this->app->bind(
+            FraudeServiceInterface::class,
+            FraudeDetectionService::class,
         );
     }
 
@@ -24,6 +32,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Schema::defaultStringLength(191);
     }
 }
